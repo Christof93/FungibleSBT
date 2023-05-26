@@ -1,2 +1,2 @@
-# SciSBT
-A Soulbound Token (SBT) for a decentralized scientific reputation system
+# FungibleSBT
+An interpretaion of a smart contract for a fungible Soulbound Token (SBT).
