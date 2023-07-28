@@ -108,3 +108,23 @@ interface IERC5727 is IERC3525, IERC5192, IERC5484, IERC4906 {
         bytes calldata data
     ) external returns (bool);
 }
+
+/**
+ * @title ERC5727 Soulbound Token Expirable Interface
+ * @dev This extension allows soulbound tokens to be expirable and renewable.
+ */
+interface IERC5727Expirable is IERC5727 {
+    /**
+     * @notice Set the expiry date of a token.
+     * @dev MUST revert if the `tokenId` token does not exist.
+     *      MUST revert if the `date` is in the past.
+     * @param tokenId The token whose expiry date is set
+     * @param expiration The expire date to set
+     * @param isRenewable Whether the token is renewable
+     */
+    function setExpiration(
+        uint256 tokenId,
+        uint64 expiration,
+        bool isRenewable
+    ) external;
+}
