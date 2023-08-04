@@ -4,87 +4,92 @@ pragma solidity ^0.8.0;
 
 interface IFungibleSBT {
     /**
-     * @notice Get the issuer of a token.
-     * @dev MUST revert if the `tokenId` does not exist
-     * @param tokenId the token for which to query the issuer
-     * @return The address of the issuer of `tokenId`
+     * @dev Returns the name of the token.
      */
-    function issuerOf(uint256 tokenId) external view returns (address);
+    function name() external view returns (string memory);
 
     /**
-     * @notice Issue a token in a specified slot to an address.
+     * @dev Returns the symbol of the token.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() external view returns (uint8);
+    
+    /**
+     * @notice Get the value of a token.
+     * @param account The address to query the balance
+     * @return The balance of address
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+    
+    /**
+     * @notice Issue an amount of tokens to an address.
      * @dev MUST revert if the `to` address is the zero address.
      *      MUST revert if the `verifier` address is the zero address.
      * @param to The address to issue the token to
-     * @param tokenId The token id
-     * @param slot The slot to issue the token in
      * @param data Additional data used to issue the token
      */
     function issue(
         address to,
-        uint256 tokenId,
         uint256 amount,
-        uint256 slot,
         bytes calldata data
     ) external payable;
 
     /**
-     * @notice Revoke a token from an address.
+     * @notice Revoke/burn tokens.
      * @dev MUST revert if the `tokenId` does not exist.
-     * @param tokenId The token id
-     * @param data The additional data used to revoke the token
+     * @param account The account
+     * @param amount The amount of tokens
+     * @param data Additional data used to revoke the token
      */
-    function revoke(uint256 tokenId, bytes calldata data) external payable;
+    function revoke(
+        address account,
+        uint256 amount,
+        bytes calldata data
+    ) external payable;
 
     /**
-     * @notice Get the value of a token.
-     * @param _tokenId The token for which to query the balance
-     * @return The value of `_tokenId`
+     * @dev Sets `amount` as allowance of `revoker` to burn caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     * @param revoker address of the account burning the tokens.
+     * @param amount allowance of tokens which may be burned by the revoker.
      */
-    function balanceOf(uint256 _tokenId) external view returns (uint256);
+    function extendRevokeAuth(address revoker, uint256 amount) external returns (bool);
 
     /**
-     * @notice Get the maximum value of a token that an operator is allowed to manage.
-     * @param _tokenId The token for which to query the allowance
-     * @param _operator The address of an operator
-     * @return The current approval value of `_tokenId` that `_operator` is allowed to manage
-     */
-    function allowance(uint256 _tokenId, address _operator) external view returns (uint256);
-
-
-    /**
-     * @notice Transfer value from a specified token to an address. The caller should confirm that
-     *  `_to` is capable of receiving ERC-3525 tokens.
-     * @dev This function MUST create a new ERC-3525 token with the same slot for `_to`, 
-     *  or find an existing token with the same slot owned by `_to`, to receive the transferred value.
-     *  MUST revert if `_fromTokenId` is zero token id or does not exist.
-     *  MUST revert if `_to` is zero address.
-     *  MUST revert if `_value` exceeds the balance of `_fromTokenId` or its allowance to the
-     *  operator.
-     *  MUST emit `Transfer` and `TransferValue` events.
-     * @param _fromTokenId The token to transfer value from
-     * @param _to The address to transfer value to
-     * @param _value The transferred value
-     * @return ID of the token which receives the transferred value
-     */
-    function transferFrom(
-        uint256 _fromTokenId,
-        address _to,
-        uint256 _value
-    ) external payable returns (uint256);
+    * @notice provides burn authorization of ...
+    * @dev unassigned tokenIds are invalid, and queries do throw
+    * @param revoker address of the account burning the tokens.
+    * @param holder address of the account holding the tokens to be burned
+    */
+    function revokeAllowance(address revoker, address holder) external view returns (uint256);
 
     /**
      * @notice Set the expiry date of a token.
-     * @dev MUST revert if the `tokenId` token does not exist.
-     *      MUST revert if the `date` is in the past.
-     * @param tokenId The token whose expiry date is set
+     * @dev MUST revert if the `date` is in the past.
      * @param expiration The expire date to set
      * @param isRenewable Whether the token is renewable
      */
     function setExpiration(
-        uint256 tokenId,
         uint64 expiration,
         bool isRenewable
     ) external;
-
 }
