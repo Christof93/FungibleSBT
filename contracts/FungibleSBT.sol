@@ -114,10 +114,6 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
         uint256 amount
     ) external payable returns (bool) {
         if (account != msg.sender) {
-            require(
-                amount <= revocationAllowance(account, msg.sender),
-                "Not allowed to revoke this amount of issued tokens from account."
-            );
             _spendBurnAllowance(account, msg.sender, amount);
         }
         _burn(account, amount);
