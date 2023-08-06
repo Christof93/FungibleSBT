@@ -1,11 +1,13 @@
 const FungibleSBT = artifacts.require("FungibleSBT");
 
 contract("FungibleSBT", (accounts) => {
-  it("should put 100 Epistemo in the first account", async () => {
+  it("should put 100 Epistemo in the first account but only to the unassigned balance", async () => {
     const FungibleSBTInstance = await FungibleSBT.deployed();
-    const balance = await FungibleSBTInstance.balanceOf(accounts[0]);
+    const unassignedBalance = await FungibleSBTInstance.getUnassignedBalance(accounts[0]);
+    const tokenBalance = await FungibleSBTInstance.getBalance(accounts[0]);
 
-    assert.equal(balance.valueOf(), 100, "100𐅿 wasn't in the first account");
+    assert.equal(unassignedBalance.valueOf(), 100, "100𐅿 wasn't in unassigned balance of the first account");
+    assert.equal(tokenBalance.valueOf(), 0, "100𐅿 was issued to the first account");
   });
   it("should return the token's name", async () => {
     const FungibleSBTInstance = await FungibleSBT.deployed();
@@ -33,28 +35,40 @@ contract("FungibleSBT", (accounts) => {
     const accountTwo = accounts[1];
 
     // Get initial balances of first and second account.
+    const accountOneUnassignedStartingBalance = (
+      await FungibleSBTInstance.getUnassignedBalance(accountOne)
+    ).toNumber();
     const accountOneStartingBalance = (
-      await FungibleSBTInstance.balanceOf(accountOne)
+      await FungibleSBTInstance.getBalance(accountOne)
+    ).toNumber();
+    const accountTwoUnassignedStartingBalance = (
+      await FungibleSBTInstance.getUnassignedBalance(accountTwo)
     ).toNumber();
     const accountTwoStartingBalance = (
-      await FungibleSBTInstance.balanceOf(accountTwo)
+      await FungibleSBTInstance.getBalance(accountTwo)
     ).toNumber();
 
     // Make transaction from first account to second.
     const amount = 10;
-    await FungibleSBTInstance.issue(accountTwo, amount);
+    let result = await FungibleSBTInstance.issue(accountTwo, amount);
 
     // Get balances of first and second account after the transactions.
+    const accountOneUnassignedEndingBalance = (
+      await FungibleSBTInstance.getUnassignedBalance(accountOne)
+    ).toNumber();
     const accountOneEndingBalance = (
-      await FungibleSBTInstance.balanceOf(accountOne)
+      await FungibleSBTInstance.getBalance(accountOne)
+    ).toNumber();
+    const accountTwoUnassignedEndingBalance = (
+      await FungibleSBTInstance.getUnassignedBalance(accountTwo)
     ).toNumber();
     const accountTwoEndingBalance = (
-      await FungibleSBTInstance.balanceOf(accountTwo)
+      await FungibleSBTInstance.getBalance(accountTwo)
     ).toNumber();
 
     assert.equal(
-      accountOneEndingBalance,
-      accountOneStartingBalance - amount,
+      accountOneUnassignedEndingBalance,
+      accountOneUnassignedStartingBalance - amount,
       "Amount wasn't correctly taken by the sender"
     );
     assert.equal(
@@ -62,5 +76,18 @@ contract("FungibleSBT", (accounts) => {
       accountTwoStartingBalance + amount,
       "Amount wasn't correctly sent to the receiver"
     );
+    assert.equal(
+      accountTwoUnassignedEndingBalance,
+      accountTwoUnassignedStartingBalance,
+      "Amount was sent to the wrong balance mapping"
+    );
+    assert.equal(
+      accountOneEndingBalance,
+      accountOneStartingBalance,
+      "Amount was sent from the wrong balance mapping"
+    );
+    assert.equal(
+      result.logs[0].event, "Issued", "Issued event not emitted."
+    )
   });
 });

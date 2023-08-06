@@ -14,9 +14,12 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     using Counters for Counters.Counter;
 
     mapping(address => uint256) private _balances;
-    mapping(address => mapping(address => uint256)) private _burnAllowances;
-
+    mapping(address => uint256) private _unassignedBalances; 
+    
     uint256 private _totalSupply;
+    
+    mapping(address => mapping(address => uint256)) private _burnAllowances;
+    mapping(address => uint256) private _lendings;
 
     string _name;
     string _symbol;
@@ -61,12 +64,21 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     }
 
     /**
-     * @notice Get the value of a token.
+     * @notice Get the balanace of a token.
      * @param account The address to query the balance
      * @return The balance of address
      */
-    function balanceOf(address account) external view returns (uint256) {
+    function getBalance(address account) external view returns (uint256) {
         return _balances[account];
+    }
+
+    /**
+     * @notice Get the value of a token.
+     * @param account The address to query the balance
+     * @return The balance of not yet assigned tokens of the address
+     */
+    function getUnassignedBalance(address account) external view returns (uint256) {
+        return _unassignedBalances[account];
     }
 
     /**
@@ -101,6 +113,13 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
         address account,
         uint256 amount
     ) external payable returns (bool) {
+        if (account != msg.sender) {
+            require(
+                amount <= revocationAllowance(account, msg.sender),
+                "Not allowed to revoke this amount of issued tokens from account."
+            );
+            _spendBurnAllowance(account, msg.sender, amount);
+        }
         _burn(account, amount);
         emit Revoked(account, amount);
         return true;
@@ -122,8 +141,12 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
      * @param revoker address of the account burning the tokens.
      * @param amount allowance of tokens which may be burned by the revoker.
      */
-    function extendRevokeAuth(address revoker, uint256 amount) external returns (bool) {
+    function extendRevocationAuth(address revoker, uint256 amount) external returns (bool) {
         address from = msg.sender;
+        uint256 accountBalance = _balances[from];
+        uint256 alreadyLent = _lendings[from];
+        require(alreadyLent + amount <= accountBalance,
+            "Fungible SBT: Can not extend revocation authority. Potential revocations exceed balance.");
         _burnAllowances[from][revoker] += amount;
         return true;
     }
@@ -171,16 +194,14 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
 
         _beforeTokenTransfer(from, to, amount);
 
-        uint256 fromBalance = _balances[from];
-        require(fromBalance >= amount, "FungibleSBT: transfer amount exceeds balance");
+        uint256 fromBalance = _unassignedBalances[from];
+        require(fromBalance >= amount, "FungibleSBT: amount of tokens to be issued exceeds balance of unassigned tokens.");
         unchecked {
-            _balances[from] = fromBalance - amount;
+            _unassignedBalances[from] = fromBalance - amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
             _balances[to] += amount;
         }
-
-        emit Transfer(from, to, amount);
 
         _afterTokenTransfer(from, to, amount);
     }
@@ -202,7 +223,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
         _totalSupply += amount;
         unchecked {
             // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
-            _balances[account] += amount;
+            _unassignedBalances[account] += amount;
         }
         emit Transfer(address(0), account, amount);
 
@@ -255,8 +276,14 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     function _setBurnAllowance(address owner, address spender, uint256 amount) internal virtual {
         require(owner != address(0), "FungibleSBT: set burn allowance from the zero address");
         require(spender != address(0), "FungibleSBT: approve to the zero address");
+        
+        // subtract what potential spender owes from total lendings
+        _lendings[owner] -= _burnAllowances[owner][spender];
+        // add the new amount to lendings
+        _lendings[owner] += amount;
 
         _burnAllowances[owner][spender] = amount;
+
         // emit Approval(owner, spender, amount);
     }
 

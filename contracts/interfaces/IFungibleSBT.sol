@@ -41,13 +41,14 @@ interface IFungibleSBT {
      */
     function decimals() external view returns (uint8);
     
+
     /**
-     * @notice Get the value of a token.
+     * @notice Get the balanace of a token.
      * @param account The address to query the balance
      * @return The balance of address
      */
-    function balanceOf(address account) external view returns (uint256);
-
+    function getBalance(address account) external view returns (uint256);
+    
     /**
      * @dev Returns the amount of tokens in existence.
      */
@@ -90,7 +91,7 @@ interface IFungibleSBT {
      * @param revoker address of the account burning the tokens.
      * @param amount allowance of tokens which may be burned by the revoker.
      */
-    function extendRevokeAuth(address revoker, uint256 amount) external returns (bool);
+    function extendRevocationAuth(address revoker, uint256 amount) external returns (bool);
 
     /**
     * @notice provides burn authorization of ...
