@@ -1,6 +1,8 @@
-var MyContract = artifacts.require("FungibleSBT");
+var FungibleSBT = artifacts.require("FungibleSBT");
 
-module.exports = function(deployer) {
+module.exports = async function(deployer, network, accounts) {
   // deployment steps
-  deployer.deploy(MyContract, "epistemo", "Ꭱ");
+  if (network=="development") {
+    deployer.deploy(FungibleSBT, "epistemo", "𐅿");
+  }
 };

@@ -4,6 +4,29 @@ pragma solidity ^0.8.0;
 
 interface IFungibleSBT {
     /**
+     * @dev Emitted when tokens are issued from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Issued(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    
+    /**
+     * @dev MUST emit when a token is revoked.
+     * @param from The address of the owner
+     * @param value The token id
+     */
+    event Revoked(address indexed from, uint256 value);
+
+    /**
      * @dev Returns the name of the token.
      */
     function name() external view returns (string memory);
@@ -33,28 +56,23 @@ interface IFungibleSBT {
     /**
      * @notice Issue an amount of tokens to an address.
      * @dev MUST revert if the `to` address is the zero address.
-     *      MUST revert if the `verifier` address is the zero address.
      * @param to The address to issue the token to
-     * @param data Additional data used to issue the token
+     * @param amount The amount of tokens
      */
     function issue(
         address to,
-        uint256 amount,
-        bytes calldata data
-    ) external payable;
+        uint256 amount
+    ) external payable returns (bool);
 
     /**
      * @notice Revoke/burn tokens.
-     * @dev MUST revert if the `tokenId` does not exist.
      * @param account The account
      * @param amount The amount of tokens
-     * @param data Additional data used to revoke the token
      */
     function revoke(
         address account,
-        uint256 amount,
-        bytes calldata data
-    ) external payable;
+        uint256 amount
+    ) external payable returns (bool);
 
     /**
      * @dev Sets `amount` as allowance of `revoker` to burn caller's tokens.
@@ -80,7 +98,7 @@ interface IFungibleSBT {
     * @param revoker address of the account burning the tokens.
     * @param holder address of the account holding the tokens to be burned
     */
-    function revokeAllowance(address revoker, address holder) external view returns (uint256);
+    function revocationAllowance(address revoker, address holder) external view returns (uint256);
 
     /**
      * @notice Set the expiry date of a token.
