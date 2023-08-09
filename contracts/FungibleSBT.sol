@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "./interfaces/IFungibleSBT.sol";
 import "../node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../node_modules/@openzeppelin/contracts/utils/Counters.sol";
+import "../node_modules/@openzeppelin/contracts/utils/math/Math.sol";
+
 
 /**
  * @title Fungible Soulbound Token Interface
@@ -100,6 +102,8 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     ) external payable returns (bool) {
         address from = msg.sender;
         _transfer(from, to, amount);
+        _burnAllowances[from][to] += amount;
+        _spendBurnAllowance(to, from, amount);
         emit Issued(from, to, amount);
         return true;
     }
@@ -153,7 +157,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     * @param holder address of the account holding the tokens to be burned
     * @param revoker address of the account burning the tokens.
     */
-    function revocationAllowance(address holder, address revoker) public view virtual returns (uint256) {
+    function revocationAllowance(address holder, address revoker) external view returns (uint256) {
         return _burnAllowances[holder][revoker];
     }
 
@@ -243,11 +247,10 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
         _beforeTokenTransfer(account, address(0), amount);
 
         uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "FungibleSBT: burn amount exceeds balance");
         unchecked {
-            _balances[account] = accountBalance - amount;
+            _balances[account] = Math.max(accountBalance - amount, 0);
             // Overflow not possible: amount <= accountBalance <= totalSupply.
-            _totalSupply -= amount;
+            _totalSupply -= Math.max(accountBalance, amount);
         }
 
         emit Transfer(account, address(0), amount);
