@@ -108,7 +108,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     function issue(
         address to,
         uint256 amount
-    ) external payable returns (bool) {
+    ) external returns (bool) {
         address from = msg.sender;
         _transfer(from, to, amount);
         // can not be more than _totalSupply
@@ -127,7 +127,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     function revoke(
         address account,
         uint256 amount
-    ) external payable returns (bool) {
+    ) external returns (bool) {
         address revoker = msg.sender;       
         uint256 allowance = _issued[account][revoker];        
         require(allowance >= amount, "Fungible SBT: Not enough revocation allowance");
