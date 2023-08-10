@@ -6,23 +6,17 @@ interface IFungibleSBT {
     /**
      * @dev Emitted when tokens are issued from one account (`from`) to
      * another (`to`).
-     *
-     * Note that `value` may be zero.
      */
     event Issued(address indexed from, address indexed to, uint256 value);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
+     * another (`to`). Usually only happens through the minting.
      */
     event Transfer(address indexed from, address indexed to, uint256 value);
     
     /**
-     * @dev MUST emit when a tokens are revoked.
-     * @param from The address of the owner
-     * @param value The token id
+     * @dev MUST emit when `value` tokens are revoked from account `from`.
      */
     event Revoked(address indexed from, uint256 value);
 
@@ -41,9 +35,8 @@ interface IFungibleSBT {
      */
     function decimals() external view returns (uint8);
     
-
     /**
-     * @notice Get the balanace of a token.
+     * @notice Get the balance of a token.
      * @param account The address to query the balance
      * @return The balance of address
      */
@@ -51,8 +44,8 @@ interface IFungibleSBT {
 
     /**
      * @notice Get the amount of tokens issued by spender to owner.
-     * @param from The address of the spender
      * @param from The address of the owner
+     * @param to The address of the spender
      * @return The total issuance of spender to owner
      */
     function getIssuance(address from, address to) external view returns (uint256);
@@ -71,7 +64,7 @@ interface IFungibleSBT {
     function issue(
         address to,
         uint256 amount
-    ) external payable returns (bool);
+    ) external returns (bool);
 
     /**
      * @notice Revoke/burn tokens.
@@ -81,5 +74,5 @@ interface IFungibleSBT {
     function revoke(
         address account,
         uint256 amount
-    ) external payable returns (bool);
+    ) external returns (bool);
 }

@@ -5,5 +5,9 @@
   },
   "devDependencies": {
     "solidity-coverage": "^0.7.22"
+  },
+  "scripts": {
+    "coverage": "truffle run coverage",
+    "test": "truffle test"
   }
 }
