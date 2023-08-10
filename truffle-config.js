@@ -9,7 +9,12 @@ module.exports = {
   mocha: {},
   compilers: {
     solc: {
-      version: "0.8.19"
-    }
-  }
+      version: "0.8.19",
+      debug: {
+        enabled: true,
+        revertStrings: "all" // Optional, for better revert error messages
+      }
+    }    
+  },
+  plugins: ["solidity-coverage"]
 };

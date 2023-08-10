@@ -1,8 +1,8 @@
-const FungibleSBT = artifacts.require("FungibleSBT");
+const FungibleSBTDepositable = artifacts.require("FungibleSBTDepositable");
 
-contract("FungibleSBT", (accounts) => {
+contract("FungibleSBTDepositable", (accounts) => {
   it("should put 100 Epistemo in the first account but only to the unassigned balance", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
     const unassignedBalance = await FungibleSBTInstance.getUnassignedBalance(accounts[0]);
     const tokenBalance = await FungibleSBTInstance.getBalance(accounts[0]);
 
@@ -10,25 +10,25 @@ contract("FungibleSBT", (accounts) => {
     assert.equal(tokenBalance.valueOf(), 0, "100𐅿 was issued to the first account");
   });
   it("should return the token's name", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
     const name = await FungibleSBTInstance.name();
 
     assert.equal(name, "epistemo", "Name wasn't as expected.");
   });
   it("should return the token's symbol", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
     const symbol = await FungibleSBTInstance.symbol();
 
     assert.equal(symbol, "𐅿", "Symbol wasn't as expected.");
   });
   it("should return the token's decimal places", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
     const decimals = await FungibleSBTInstance.decimals();
 
     assert.equal(decimals, 18, "Decimals wasn't as expected.");
   });
   it("should issue the tokens correctly", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
 
     // Get initial balances of first and second account.
     const [
@@ -91,7 +91,7 @@ contract("FungibleSBT", (accounts) => {
     );
   });
   it("should not allow to transfer issued tokens.", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
 
     const amount = 10;
     // acc 2 balance = 10
@@ -139,7 +139,7 @@ contract("FungibleSBT", (accounts) => {
     )
   });
   it("should allow to revoke tokens which were issued.", async () => {
-    const FungibleSBTInstance = await FungibleSBT.deployed();
+    const FungibleSBTInstance = await FungibleSBTDepositable.deployed();
 
     const amount = 10;
     // acc 2 balance = 10
@@ -185,7 +185,6 @@ contract("FungibleSBT", (accounts) => {
       burnallowanceBefore - amount,
       "Revocation allowance not deducted correctly.")
   });
-  
 
 });
 

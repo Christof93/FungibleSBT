@@ -1,4 +1,4 @@
-//contracts/interface/IERC5727.sol
+//contracts/interface/IFungibleSBT.sol
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -20,7 +20,7 @@ interface IFungibleSBT {
     event Transfer(address indexed from, address indexed to, uint256 value);
     
     /**
-     * @dev MUST emit when a token is revoked.
+     * @dev MUST emit when a tokens are revoked.
      * @param from The address of the owner
      * @param value The token id
      */
@@ -48,6 +48,14 @@ interface IFungibleSBT {
      * @return The balance of address
      */
     function getBalance(address account) external view returns (uint256);
+
+    /**
+     * @notice Get the amount of tokens issued by spender to owner.
+     * @param from The address of the spender
+     * @param from The address of the owner
+     * @return The total issuance of spender to owner
+     */
+    function getIssuance(address from, address to) external view returns (uint256);
     
     /**
      * @dev Returns the amount of tokens in existence.
@@ -74,41 +82,4 @@ interface IFungibleSBT {
         address account,
         uint256 amount
     ) external payable returns (bool);
-
-    /**
-     * @dev Sets `amount` as allowance of `revoker` to burn caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     * @param revoker address of the account burning the tokens.
-     * @param amount allowance of tokens which may be burned by the revoker.
-     */
-    function extendRevocationAuth(address revoker, uint256 amount) external returns (bool);
-
-    /**
-    * @notice provides burn authorization of ...
-    * @dev unassigned tokenIds are invalid, and queries do throw
-    * @param revoker address of the account burning the tokens.
-    * @param holder address of the account holding the tokens to be burned
-    */
-    function revocationAllowance(address revoker, address holder) external view returns (uint256);
-
-    /**
-     * @notice Set the expiry date of a token.
-     * @dev MUST revert if the `date` is in the past.
-     * @param expiration The expire date to set
-     * @param isRenewable Whether the token is renewable
-     */
-    function setExpiration(
-        uint64 expiration,
-        bool isRenewable
-    ) external;
 }
