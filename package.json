@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.2",
-    "bigint-buffer": "^1.1.5"
+    "bigint-buffer": "^1.1.5",
+    "truffle": "^5.11.2"
   },
   "devDependencies": {
     "solidity-coverage": "^0.7.22"
