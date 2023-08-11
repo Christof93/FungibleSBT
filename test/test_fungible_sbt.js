@@ -1,7 +1,7 @@
 const FungibleSBT = artifacts.require("FungibleSBT");
 
 contract("FungibleSBT", (accounts) => {
-  it("should put 100 Epistemo in the first account but only to the unassigned balance", async () => {
+  it("should put 100 Epistemo in the first account but only to the unassigned balance", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
     const unassignedBalance = await FungibleSBTInstance.getUnassignedBalance(accounts[0]);
     const tokenBalance = await FungibleSBTInstance.getBalance(accounts[0]);
@@ -9,25 +9,25 @@ contract("FungibleSBT", (accounts) => {
     assert.equal(unassignedBalance.valueOf(), 100, "100𐅿 wasn't in unassigned balance of the first account");
     assert.equal(tokenBalance.valueOf(), 0, "100𐅿 was issued to the first account");
   });
-  it("should return the token's name", async () => {
+  it("should return the token's name", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
     const name = await FungibleSBTInstance.name();
 
     assert.equal(name, "epistemo", "Name wasn't as expected.");
   });
-  it("should return the token's symbol", async () => {
+  it("should return the token's symbol", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
     const symbol = await FungibleSBTInstance.symbol();
 
     assert.equal(symbol, "𐅿", "Symbol wasn't as expected.");
   });
-  it("should return the token's decimal places", async () => {
+  it("should return the token's decimal places", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
     const decimals = await FungibleSBTInstance.decimals();
 
     assert.equal(decimals, 18, "Decimals wasn't as expected.");
   });
-  it("should issue the tokens correctly", async () => {
+  it("should issue the tokens correctly", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
 
     // Get initial balances of first and second account.
@@ -90,7 +90,7 @@ contract("FungibleSBT", (accounts) => {
       result.logs[0].event, "Issued", "Issued event not emitted."
     );
   });
-  it("should not allow to transfer issued tokens.", async () => {
+  it("should not allow to transfer issued tokens.", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
 
     const amount = 10;
@@ -138,7 +138,7 @@ contract("FungibleSBT", (accounts) => {
       accountTwoStartingBalance,
     )
   });
-  it("should allow to revoke tokens which were issued.", async () => {
+  it("should allow to revoke tokens which were issued.", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
 
     const amount = 10;

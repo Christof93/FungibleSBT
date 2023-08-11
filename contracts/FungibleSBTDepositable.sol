@@ -11,7 +11,7 @@ import "./interfaces/IFungibleSBTDepositable.sol";
  */
 contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
     mapping(address => mapping(address => uint256)) private _burnAllowances;
-    mapping(address => uint256) private _lendings;
+    mapping(address => uint256) private _totalCollaterals;
 
 
     constructor(string memory name_, string memory symbol_) FungibleSBT(name_, symbol_) {}
@@ -22,7 +22,7 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
     * @param holder address of the account holding the tokens to be burned
     * @param revoker address of the account burning the tokens.
     */
-    function revocationAllowance(address holder, address revoker) external view returns (uint256) {
+    function getCollateralDeposit(address holder, address revoker) external view returns (uint256) {
         return _burnAllowances[holder][revoker];
     }
 
@@ -31,15 +31,35 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
      * @param account The account
      * @param amount The amount of tokens
      */
-    function revokeDeposit(
+    function burnDeposit(
         address account,
         uint256 amount
-    ) external payable returns (bool) {
+    ) external returns (bool) {
         address revoker = msg.sender;
         uint256 allowance = _burnAllowances[account][revoker];
         
-        require(allowance >= amount, "Fungible SBT: Not enough revocation allowance");
+        require(allowance >= amount, "Fungible SBT: Trying to burn amount larger than assigned collateral deposit.");
         _burn(account, amount);
+        if (account != revoker) {
+            _spendBurnAllowance(account, revoker, amount);
+        }
+        emit Revoked(account, amount);
+        return true;
+    }
+
+    /**
+     * @notice Return the revocation authorisations.
+     * @param account The account
+     * @param amount The amount of tokens
+     */
+    function returnDeposit(
+        address account,
+        uint256 amount
+    ) external returns (bool) {
+        address revoker = msg.sender;
+        uint256 allowance = _burnAllowances[account][revoker];
+        
+        require(allowance >= amount, "Fungible SBT: Trying to return amount larger than assigned collateral deposit.");
         if (account != revoker) {
             _spendBurnAllowance(account, revoker, amount);
         }
@@ -63,12 +83,12 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
      * @param revoker address of the account burning the tokens.
      * @param amount allowance of tokens which may be burned by the revoker.
      */
-    function extendRevocationAuth(address revoker, uint256 amount) external returns (bool) {
+    function grantCollateral(address revoker, uint256 amount) external returns (bool) {
         address from = msg.sender;
         uint256 accountBalance = _balances[from];
-        uint256 alreadyLent = _lendings[from];
+        uint256 alreadyLent = _totalCollaterals[from];
         require(alreadyLent + amount <= accountBalance,
-            "Fungible SBT: Can not extend revocation authority. Resulting deposits exceed balance.");
+            "Fungible SBT: Can not grant collateral. Resulting deposits exceed total balance.");
         _setBurnAllowance(from, revoker, amount);
         return true;
     }
@@ -89,11 +109,11 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
     function _setBurnAllowance(address owner, address spender, uint256 amount) internal virtual {
         require(owner != address(0), "FungibleSBT: set burn allowance from the zero address");
         require(spender != address(0), "FungibleSBT: approve to the zero address");
-        
-        // subtract what potential spender owes from total lendings
-        _lendings[owner] -= _burnAllowances[owner][spender];
-        // add the new amount to lendings
-        _lendings[owner] += amount;
+
+        // subtract what potential spender owes from total totalCollaterals
+        _totalCollaterals[owner] -= _burnAllowances[owner][spender];
+        // add the new amount to totalCollaterals
+        _totalCollaterals[owner] += amount;
 
         _burnAllowances[owner][spender] = amount;
     }

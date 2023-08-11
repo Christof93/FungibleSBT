@@ -6,7 +6,8 @@ module.exports = {
       host: "127.0.0.1"
     }
   },
-  mocha: {},
+  mocha: {
+  },
   compilers: {
     solc: {
       version: "0.8.19",
