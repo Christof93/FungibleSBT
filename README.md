@@ -21,6 +21,12 @@ Compile
 truffle compile
 ```
 
+Test
+
+```
+truffle test --network development
+```
+
 Deploy
 ```
 truffle migrate --reset --network FungibleSBT 
