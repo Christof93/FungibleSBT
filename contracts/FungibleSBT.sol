@@ -9,8 +9,8 @@ import "../node_modules/@openzeppelin/contracts/utils/math/Math.sol";
 
 
 /**
- * @title Fungible Soulbound Token Interface
- * @dev Implementation of the semi-fungible soul-bound token ERC5727 standard.
+ * @title Fungible Soulbound Token Implementation
+ * @dev Implementation of a fungible soul-bound token.
  */
 contract FungibleSBT is  ERC165, IFungibleSBT {
     using Counters for Counters.Counter;
