@@ -1,4 +1,4 @@
-// contracts/FungibleSBT.sol
+// contracts/FungibleSBTDepositable.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -6,15 +6,19 @@ import "./FungibleSBT.sol";
 import "./interfaces/IFungibleSBTDepositable.sol";
 
 /**
- * @title Fungible Soulbound Token Interface
- * @dev Implementation of the semi-fungible soul-bound token ERC5727 standard.
+ * @title Depositable Fungible Soulbound Token
+ * @dev Implementation of the fungible soul-bound token standard which makes it 
+ * possible to deposit tokens as a collateral by extending the authority to burn the
+ * token to certain addresses.
  */
 contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
     mapping(address => mapping(address => uint256)) private _burnAllowances;
     mapping(address => uint256) private _totalCollaterals;
 
-
-    constructor(string memory name_, string memory symbol_) FungibleSBT(name_, symbol_) {}
+    constructor(string memory name_, string memory symbol_) FungibleSBT(
+        name_,
+        symbol_
+    ) {}
 
     /**
     * @notice provides burn authorization of ...
@@ -22,7 +26,7 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
     * @param holder address of the account holding the tokens to be burned
     * @param revoker address of the account burning the tokens.
     */
-    function getCollateralDeposit(address holder, address revoker) external view returns (uint256) {
+    function collateralDeposit(address holder, address revoker) external view returns (uint256) {
         return _burnAllowances[holder][revoker];
     }
 

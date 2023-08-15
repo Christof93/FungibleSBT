@@ -3,8 +3,8 @@ const FungibleSBT = artifacts.require("FungibleSBT");
 contract("FungibleSBT", (accounts) => {
   it("should put 100 Epistemo in the first account but only to the unassigned balance", async function()  {
     const FungibleSBTInstance = await FungibleSBT.deployed();
-    const unassignedBalance = await FungibleSBTInstance.getUnassignedBalance(accounts[0]);
-    const tokenBalance = await FungibleSBTInstance.getBalance(accounts[0]);
+    const unassignedBalance = await FungibleSBTInstance.unassignedBalanceOf(accounts[0]);
+    const tokenBalance = await FungibleSBTInstance.balanceOf(accounts[0]);
 
     assert.equal(unassignedBalance.valueOf(), 100, "100𐅿 wasn't in unassigned balance of the first account");
     assert.equal(tokenBalance.valueOf(), 0, "100𐅿 was issued to the first account");
@@ -191,10 +191,10 @@ contract("FungibleSBT", (accounts) => {
 
 let getBothBalances = async (token, account) => {
   let unassigned = (
-    await token.getUnassignedBalance(account)
+    await token.unassignedBalanceOf(account)
   ).toNumber();
   let regular = (
-    await token.getBalance(account)
+    await token.balanceOf(account)
   ).toNumber();
   return [unassigned, regular];
 }

@@ -3,18 +3,14 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IFungibleSBT.sol";
-import "../node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "../node_modules/@openzeppelin/contracts/utils/Counters.sol";
-import "../node_modules/@openzeppelin/contracts/utils/math/Math.sol";
-
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title Fungible Soulbound Token Implementation
  * @dev Implementation of a fungible soul-bound token.
  */
 contract FungibleSBT is  ERC165, IFungibleSBT {
-    using Counters for Counters.Counter;
-
     mapping(address => uint256) internal _balances;
     mapping(address => uint256) internal _unassignedBalances; 
     
@@ -69,7 +65,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
      * @param account The address to query the balance
      * @return The balance of address
      */
-    function getBalance(address account) external view returns (uint256) {
+    function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
     }
 
@@ -88,7 +84,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
      * @param account The address to query the balance
      * @return The balance of not yet assigned tokens of the address
      */
-    function getUnassignedBalance(address account) external view returns (uint256) {
+    function unassignedBalanceOf(address account) external view returns (uint256) {
         return _unassignedBalances[account];
     }
 

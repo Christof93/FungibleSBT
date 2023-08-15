@@ -40,7 +40,14 @@ interface IFungibleSBT {
      * @param account The address to query the balance
      * @return The balance of address
      */
-    function getBalance(address account) external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    
+    /**
+     * @notice Get the balance of minted but not issued token.
+     * @param account The address to query the balance
+     * @return The balance of not yet assigned tokens of the address
+     */
+    function unassignedBalanceOf(address account) external view returns (uint256);
 
     /**
      * @notice Get the amount of tokens issued by spender to owner.
