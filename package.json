@@ -10,6 +10,8 @@
   },
   "scripts": {
     "coverage": "truffle run coverage",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate --network development",
     "test": "truffle test"
   }
 }
