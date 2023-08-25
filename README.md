@@ -18,12 +18,12 @@ This repository implements a soulbound _fungible_ token standard. Furthermore, i
 <img src="assets/images/nontransferrable.png" alt="Basic functionalities of the fungible soul bound token" width="20%"/>
 </p>
 
-3. __Revocability__ -  The token can be burned by the entity which issued it.
+2. __Revocability__ -  The token can be burned by the entity which issued it.
 <p align="center">
 <img src="assets/images/revocable.png" alt="Basic functionalities of the fungible soul bound token" width="20%"/>
 </p>
 
-1. __Fungibility__ - The individual unitary valued tokens are indistinguishable from each other.
+3. __Fungibility__ - The individual unitary valued tokens are indistinguishable from each other.
 <p align="center">
 <img src="assets/images/fungible.png" alt="Basic functionalities of the fungible soul bound token" width="20%"/>
 </p>
