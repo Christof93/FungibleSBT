@@ -13,7 +13,7 @@ Among possible use cases might be things such as loyalty points, renting contrac
 This repository implements a soulbound _fungible_ token standard. Furthermore, it proposes an extension of the token which makes it depositable as a collateral. For example in the case of reputation so that the activities which increase reputation can also potentially lead to a loss of reputation. Or so that loyalty points can be burned in exchange for rewards.
 
 ### What are the properties of the Fungible Soulbound Token?
-1. __Nontransferability__ - The token can not be transferred to another account.
+1. __Nontransferability__ - The token can not be transferred to another account or exchanged.
 <p align="center">
 <img src="assets/images/nontransferrable.png" alt="Basic functionalities of the fungible soul bound token" width="20%"/>
 </p>
