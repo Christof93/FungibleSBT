@@ -71,4 +71,11 @@ Then, to run the test suite use this command:
 ```
 npm run test
 ```
+ 
+License
+---
+This work is published under MIT License.
 
+Copyright (C) 2023 by Christof Bless
+
+Email: christofbless@gmail.com
