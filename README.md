@@ -1,10 +1,12 @@
 
-
 <p align="center">
 <img src="assets/images/FungibleSBTIcon.png" alt="SBT Icon" width="20%"/>
 </p>
 
-# FungibleSBT, A prototype for a fungible, soulbound, and revocable token
+<h1 align="center">FungibleSBT</h1>
+<h4 align="center">A Prototype for a Fungible, Soulbound, and Revocable Token</h4>
+
+![CICD Test Suite Status](https://github.com/Christof93/FungibleSBT/actions/workflows/node.js.yml/badge.svg?branch=main)
 
 Soulbound Tokens (SBTs) were proposed by Ethereum's founder Vitalik Buterin to provide a means for applications such as degrees, lending or reputation. In contrast to more commonly used types of tokens SBTs can only be issued to an account once and can not be transferred further to any other address. This entails that the token can not be sold or exchanged for other currencies.
 
