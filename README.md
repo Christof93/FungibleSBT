@@ -39,8 +39,7 @@ Compile
 ---
 Install truffle and openzeppelin contracts
 ```
-npm install -g truffle
-npm install @openzeppelin/contracts
+npm install --production
 ```
 
 compile using the command:
@@ -53,9 +52,7 @@ Test
 
 Install truffle, openzeppelin and ganache
 ```
-npm install -g truffle
-npm install @openzeppelin/contracts
-npm install -g ganache
+npm install
 ```
 
 To run Ganache from the console use
