@@ -5,13 +5,14 @@
   },
   "devDependencies": {
     "ganache": "^7.9.0",
-    "truffle": "^5.11.2",
-    "solidity-coverage": "^0.7.22"
+    "ganache-cli": "^6.12.2",
+    "solidity-coverage": "^0.7.22",
+    "truffle": "^5.5.19"
   },
   "scripts": {
-    "coverage": "truffle run coverage",
+    "coverage": "truffle run coverage --network development",
     "compile": "truffle compile",
     "migrate": "truffle migrate --network development",
-    "test": "truffle test"
+    "test": "GANACHE=$(ganache --detach) && truffle test; ganache instances stop $GANACHE"
   }
 }
