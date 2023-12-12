@@ -12,7 +12,7 @@
     "solidity-coverage": "^0.8.5"
   },
   "scripts": {
-    "coverage": "hardhat run coverage --network development",
+    "coverage": "hardhat run coverage",
     "compile": "hardhat compile",
     "test": "hardhat test"
   }
