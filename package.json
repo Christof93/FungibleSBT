@@ -1,18 +1,19 @@
 {
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.2",
+    "@openzeppelin/contracts": "^5.0.1",
     "bigint-buffer": "^1.1.5"
   },
   "devDependencies": {
-    "ganache": "^7.9.0",
-    "ganache-cli": "^6.12.2",
-    "solidity-coverage": "^0.7.22",
-    "truffle": "^5.5.19"
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "chai": "^4.3.10",
+    "ethers": "^6.9.0",
+    "hardhat": "^2.19.2",
+    "solidity-coverage": "^0.8.5"
   },
   "scripts": {
-    "coverage": "truffle run coverage --network development",
-    "compile": "truffle compile",
-    "migrate": "truffle migrate --network development",
-    "test": "GANACHE=$(ganache --detach) && truffle test; ganache instances stop $GANACHE"
+    "coverage": "hardhat run coverage --network development",
+    "compile": "hardhat compile",
+    "test": "hardhat test"
   }
 }

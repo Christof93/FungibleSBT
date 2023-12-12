@@ -1,471 +1,477 @@
-const FungibleSBTDepositable = artifacts.require("FungibleSBTDepositable");
 
-contract("FungibleSBTDepositable", (accounts) => {
-  beforeEach(async function () {
-    FungibleSBTInstance = await FungibleSBTDepositable.deployed();
-  });
-  it("should put 100 Epistemo in the first account but only to the unassigned balance", async () => {
-    const unassignedBalance = await FungibleSBTInstance.unassignedBalanceOf(accounts[0]);
-    const tokenBalance = await FungibleSBTInstance.balanceOf(accounts[0]);
+const { expect } = require("chai");
+const {
+  loadFixture,
+} = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+const AddressZero = '0x0000000000000000000000000000000000000000';
 
-    assert.equal(unassignedBalance.valueOf(), 100, "100𐅿 wasn't in unassigned balance of the first account");
-    assert.equal(tokenBalance.valueOf(), 0, "100𐅿 was issued to the first account");
-  });
-  it("should return the token's name", async () => {
-    const name = await FungibleSBTInstance.name();
+describe("FungibleSBTDepositable Contract", () => {
+  async function deployTokenFixture() {
+    const [addr1, addr2, addr3] = await ethers.getSigners();
+    const token = await ethers.deployContract("FungibleSBTDepositable", ["epistemo", "𐅿"]);
+    return [ token, addr1, addr2, addr3 ];
+  }
+  describe("Deployment", function() {
+    it("should put 100 Epistemo in the first account but only to the unassigned balance", async function()  {
+      const [ FungibleSBTInstance , acc1 ] = await loadFixture(deployTokenFixture);
+      const unassignedBalance = await FungibleSBTInstance.unassignedBalanceOf(acc1.address);
+      const tokenBalance = await FungibleSBTInstance.balanceOf(acc1.address);
 
-    assert.equal(name, "epistemo", "Name wasn't as expected.");
-  });
-  it("should return the token's symbol", async function () {
-    const symbol = await FungibleSBTInstance.symbol();
+      expect(unassignedBalance).to.equal(100);
+      expect(tokenBalance).to.equal(0);
+    });
+    it("should return the total of tokens", async function() {
+      const [ FungibleSBTInstance ] = await loadFixture(deployTokenFixture);
+      const totalSupply = await FungibleSBTInstance.totalSupply();
 
-    assert.equal(symbol, "𐅿", "Symbol wasn't as expected.");
-  });
-  it("should return the token's decimal places", async function () {
-    const decimals = await FungibleSBTInstance.decimals();
+      expect(totalSupply).to.equal(100);
+    })
+    it("should return the token's name", async function()  {
+      const [ FungibleSBTInstance ] = await loadFixture(deployTokenFixture);
+      const name = await FungibleSBTInstance.name();
 
-    assert.equal(decimals, 18, "Decimals wasn't as expected.");
-  });
-  it("should issue the tokens correctly", async function () {
-    // Get initial balances of first and second account.
-    const [
-      accountOneUnassignedStartingBalance,
-      accountOneStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[0]);
-    const [
-      accountTwoUnassignedStartingBalance,
-      accountTwoStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
+      expect(name).to.equal("epistemo");
+    });
+    it("should return the token's symbol", async function()  {
+      const [ FungibleSBTInstance ] = await loadFixture(deployTokenFixture);
+      const symbol = await FungibleSBTInstance.symbol();
 
-    const issuedBefore = (
-      await FungibleSBTInstance.getIssuance(accounts[1], accounts[0])
-    ).toNumber();
-    
-    // Make transaction from first account to second.
-    const amount = 10;
-    let result = await FungibleSBTInstance.issue(accounts[1], amount);
-    
-    // Get balances of first and second account after the transactions.
-    const [
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[0]);
-    const [
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const issuedAfter = (
-      await FungibleSBTInstance.getIssuance(accounts[1], accounts[0])
-    ).toNumber();
-    // 
-    assert.equal(
-      accountOneUnassignedEndingBalance,
-      accountOneUnassignedStartingBalance - amount,
-      "Amount wasn't correctly taken by the sender"
-    );
-    assert.equal(
-      accountTwoEndingBalance,
-      accountTwoStartingBalance + amount,
-      "Amount wasn't correctly sent to the receiver"
-    );
-    assert.equal(
-      accountTwoUnassignedEndingBalance,
-      accountTwoUnassignedStartingBalance,
-      "Amount was sent to the wrong balance mapping"
-    );
-    assert.equal(
-      accountOneEndingBalance,
-      accountOneStartingBalance,
-      "Amount was sent from the wrong balance mapping"
-    );
-    assert.equal(
-      issuedAfter,
-      issuedBefore + amount,
-      "The issue transaction was not recorded properly"
-    );
-    assert.equal(
-      result.logs[0].event, "Issued", "Issued event not emitted."
-    );
-  });
-  it("should not allow to transfer issued tokens.", async function () {
-    const amount = 10;
-    // acc 2 balance = 10
-    // Get initial balances of first and second account.
-    const [
-      accountOneUnassignedStartingBalance,
-      accountOneStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[0]);
-    const [
-      accountTwoUnassignedStartingBalance,
-      accountTwoStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    try {
-      await FungibleSBTInstance.issue(accounts[0], amount, {from: accounts[1]});
-      assert.fail("Issuing an already issued token should have failed.");
-    }
-    catch (err) {
-      assert.include(
-        err.message,
-        "revert", 
-        "The error message should contain 'revert'");
-    }
-    // Get balances of first and second account after the transactions.
-    const [
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[0]);
-    const [
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    
-    // assert all balances remain unchanged
-    assertBalancesUnchanged(
-      accountOneUnassignedStartingBalance,
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance,
-      accountOneStartingBalance,
-    )    
-    assertBalancesUnchanged(
-      accountTwoUnassignedStartingBalance,
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance,
-      accountTwoStartingBalance,
-    )
-  });
-  it("should allow to revoke tokens which were issued", async function ()  {
-    const amount = 10;
-    // acc 2 balance = 10
-    // Get initial balances of first and second account.
-    const [
-      accountOneUnassignedStartingBalance,
-      accountOneStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[0]);
-    const [,accountTwoStartingBalance] = await getBothBalances(FungibleSBTInstance, accounts[1]);
+      expect(symbol).to.equal("𐅿");
+    });
+    it("should not return true if asked if 0 interface is implemented by the token contract", async function() {
+      const [ FungibleSBTInstance ] = await loadFixture(deployTokenFixture);
+      const supports0 = await FungibleSBTInstance.supportsInterface('0x70a08231');
+      
+      expect(supports0).to.equal(false);
+    })
+    it("should return the token's decimal places", async function()  {
+      const [ FungibleSBTInstance ] = await loadFixture(deployTokenFixture);
+      const decimals = await FungibleSBTInstance.decimals();
 
-    const burnallowanceBefore = (
-      await FungibleSBTInstance.getIssuance(accounts[1], accounts[0])
-    ).toNumber();
+      expect(decimals).to.equal(18);
+    });
+  });
+  describe("Issuing", function() {
+    it("should issue the tokens correctly", async function()  {
+      const [ FungibleSBTInstance, acc1, acc2 ] = await loadFixture(deployTokenFixture);
 
-    await FungibleSBTInstance.revoke(accounts[1], amount, {from: accounts[0]});
-    
-    const burnallowanceAfter = (
-      await FungibleSBTInstance.getIssuance(accounts[1], accounts[0])
-    ).toNumber();
-    // Get balances of first and second account after the transactions.
-    const [
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[0]);
-    const [,accountTwoEndingBalance] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    
-    // tokens on account two should be gone
-    assert.equal(
-      accountTwoEndingBalance,
-      accountTwoStartingBalance - amount,
-      "Token were not burned."
-    )
-    // account one did not earn any new tokens
-    assertBalancesUnchanged(
-      accountOneUnassignedStartingBalance,
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance,
-      accountOneStartingBalance,
-    )
-    // burn allowance should be restored
-    assert.equal(
-      burnallowanceAfter,
-      burnallowanceBefore - amount,
-      "Revocation allowance not deducted correctly.")
-  });
-  it("should allow to deposit tokens to another account as a collateral", async function () {
-    let amount = 10;
-    // issue 10 tokens to account 2
-    await FungibleSBTInstance.issue(accounts[1], amount);
-    // Get initial balances of second and third account.
-    const [
-      accountOneUnassignedStartingBalance,
-      accountOneStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const [
-      accountTwoUnassignedStartingBalance,
-      accountTwoStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[2]);
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    // grant a collateral to account 3 from account two to burn tokens
-    await FungibleSBTInstance.grantCollateral(accounts[2], amount, {from: accounts[1]});
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
+      // Get initial balances of first and second account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [
+        accountTwoUnassignedStartingBalance,
+        accountTwoStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2.address);
 
-    // Get balances of second and third account after the collateral.
-    const [
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const [
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[2]);
-    assert.equal(
-      collateralBefore + amount,
-      collateralAfter,
-      "Collateral has not been granted correctly"
-    );
-    // assert all balances remain unchanged
-    assertBalancesUnchanged(
-      accountOneUnassignedStartingBalance,
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance,
-      accountOneStartingBalance,
-    );   
-    assertBalancesUnchanged(
-      accountTwoUnassignedStartingBalance,
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance,
-      accountTwoStartingBalance,
-    );
-  });
-  it("should return the value of an account's collateral", async function () {
-    let amount = 10;
-    let collateralAmount = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    assert.equal(collateralAmount, amount, "The returned account collateral is not correct.");
-  });
-  it("should not allow to deposit tokens to another account as a collateral if the collateral exceeds the balance", async function () {
-    let amount = 10;
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[0], accounts[1])).toNumber();
-    // grant a collateral to account 3 from account two to burn tokens
-    try {
-      await FungibleSBTInstance.grantCollateral(accounts[2], amount);
-      assert.fail("Granting collateral should have failed because collateral value exceeds balance");
-    } 
-    catch(err) {
-      assert.include(
-        err.message,
-        "revert", 
-        "The error message should contain 'revert'");
-      assert.include(
-        err.message,
-        "Can not grant collateral", 
-        "The error message is not as expected"
+      const issuedBefore = Number(
+        await FungibleSBTInstance.getIssuance(acc2.address, acc1.address)
       );
-    }
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[0], accounts[1])).toNumber();
-    assert.equal(
-      collateralBefore,
-      collateralAfter,
-      "Collateral value should not have changed"
-    );
-    
-    
+      
+      // Make transaction from first account to second.
+      const amount = 10;
+      let result = await FungibleSBTInstance.issue(acc2.address, amount);
+      
+      // Get balances of first and second account after the transactions.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2.address);
+      const issuedAfter = Number(
+        await FungibleSBTInstance.getIssuance(acc2.address, acc1.address)
+      );
+      // 
+      expect(accountOneUnassignedEndingBalance).to.equal(accountOneUnassignedStartingBalance - amount)
+      expect(accountTwoEndingBalance).to.equal(accountTwoStartingBalance + amount)
+      expect(accountTwoUnassignedEndingBalance).to.equal(accountTwoUnassignedStartingBalance)
+      expect(accountOneEndingBalance).to.equal(accountOneStartingBalance)
+      expect(issuedAfter).to.equal(issuedBefore + amount)
+      expect(result).to.emit(FungibleSBTInstance, "Issued");
+    });
+    it("shouldn't allow transfer any tokens to and from the zero address", async function() {
+      const [ FungibleSBTInstance, acc1 ] = await loadFixture(deployTokenFixture);
+      const amount = 10;
+
+      await expect(FungibleSBTInstance.issue(AddressZero, amount))
+        .to.be.revertedWith("FungibleSBT: transfer to the zero address");
+      await expect(FungibleSBTInstance.revoke(AddressZero, amount))
+        .to.be.revertedWith("Fungible SBT: Not enough revocation allowance.");
+    });
+    it("should not allow to transfer issued tokens", async function()  {
+      const [ FungibleSBTInstance, acc1, acc2 ] = await loadFixture(deployTokenFixture);
+
+      const amount = 10;
+      await FungibleSBTInstance.issue(acc2.address, amount);
+      // acc 2 balance = 10
+      // Get initial balances of first and second account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [
+        accountTwoUnassignedStartingBalance,
+        accountTwoStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2.address);
+
+      await expect(FungibleSBTInstance.connect(acc2).issue(acc1.address, amount))
+        .to.be.revertedWith("FungibleSBT: amount of tokens to be issued exceeds balance of unassigned tokens.");
+      
+      // Get balances of first and second account after the transactions.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2.address);
+      
+      // assert all balances remain unchanged
+      assertBalancesUnchanged(
+        accountOneUnassignedStartingBalance,
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance,
+        accountOneStartingBalance,
+      )    
+      assertBalancesUnchanged(
+        accountTwoUnassignedStartingBalance,
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance,
+        accountTwoStartingBalance,
+      )
+    });
   });
-  it("should not allow to deposit tokens as collateral if the already granted collaterals exceed balance", async function () {
-    let amount = 10;
-    
-    // make sure balance is high enough
-    // acc 1 - 10 tokens, 10 collateral to acc 2
-    assert.equal(
-      (await FungibleSBTInstance.balanceOf(accounts[1])).toNumber(), amount, "Pre-test balance insufficient"
-    );
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    assert.equal(collateralBefore, amount, "Pre-test collateral insufficient");
-    // grant a collateral to account 3 from account two to burn tokens
-    try {
-      await FungibleSBTInstance.grantCollateral(accounts[2], amount, {from: accounts[1]});
-      assert.fail("Granting collateral should have failed because already granted collaterals exceed balance");
-    }
-    catch (err) {
-      assert.include(
-        err.message,
-        "revert", 
-        "The error message should contain 'revert'"
+  describe("Revoking", function() {
+    it("should not allow to revoke more tokens than were issued", async function()  {
+      const [ FungibleSBTInstance, acc1, acc2 ] = await loadFixture(deployTokenFixture);
+
+      const amount = 10;
+      await FungibleSBTInstance.issue(acc2.address, amount);
+      // acc 2 balance = 10
+      // Get initial balances of first and second account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [,accountTwoStartingBalance] = await getBothBalances(FungibleSBTInstance, acc2.address);
+
+      const burnallowanceBefore = Number(
+        await FungibleSBTInstance.getIssuance(acc2.address, acc1.address)
       );
-      assert.include(
-        err.message,
-        "Can not grant collateral", 
-        "The error message is not as expected"
+      await expect(FungibleSBTInstance.connect(acc1).revoke(acc2.address, amount+10))
+        .to.be.revertedWith("Fungible SBT: Not enough revocation allowance.")
+      
+      
+      const burnallowanceAfter = Number(
+        await FungibleSBTInstance.getIssuance(acc2.address, acc1.address)
       );
-    }
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    assert.equal(
-      collateralBefore,
-      collateralAfter,
-      "Collateral should not have been changed"
-    );
-  });
-  it("should allow to burn tokens deposited as a collateral", async function () {
-    let amount = 10;
-    // Get initial balances of second and third account.
-    const [
-      accountOneUnassignedStartingBalance,
-      accountOneStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const [
-      accountTwoUnassignedStartingBalance,
-      accountTwoStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[2]);
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    // grant a collateral to account 3 from account 2 to burn tokens
-    await FungibleSBTInstance.burnDeposit(accounts[1], amount, {from: accounts[2]});
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
+      // Get balances of first and second account after the transactions.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [,accountTwoEndingBalance] = await getBothBalances(FungibleSBTInstance, acc2.address);
+      
+      // tokens on account two should be gone
+      expect(accountTwoEndingBalance).to.equal(accountTwoStartingBalance)
+      // account one did not earn any new tokens
+      assertBalancesUnchanged(
+        accountOneUnassignedStartingBalance,
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance,
+        accountOneStartingBalance,
+      )
+      // burn allowance should be restored
+      expect(burnallowanceAfter).to.equal(burnallowanceBefore)
+    });
+    it("should allow to revoke tokens which were issued", async function()  {
+      [ FungibleSBTInstance, acc1, acc2 ] = await loadFixture(deployTokenFixture);
 
-    // Get balances of second and third account after the collateral.
-    const [
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const [
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[2]);
-    assert.equal(
-      collateralBefore - amount,
-      collateralAfter,
-      "Collateral has not been burned correctly"
-    );
-    // assert all balances remain unchanged
-    assert.equal(
-      accountOneEndingBalance,
-      accountOneStartingBalance - amount,
-      "Collateral has not been deducted from balance"
-    )
-    assert.equal(
-      accountOneUnassignedStartingBalance,
-      accountOneUnassignedEndingBalance,
-      "Unassigned balance should not have changed!"
-    )
-    assertBalancesUnchanged(
-      accountTwoUnassignedStartingBalance,
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance,
-      accountTwoStartingBalance,
-    );
-  });
-  it("should not allow to burn more tokens than the collateral value", async function () {
-    let amount = 10;
+      const amount = 10;
+      await FungibleSBTInstance.issue(acc2.address, amount);
+      // acc 2 balance = 10
+      // Get initial balances of first and second account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [ , accountTwoStartingBalance ] = await getBothBalances(FungibleSBTInstance, acc2.address);
 
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    assert.equal(
-      collateralBefore,
-      0,
-      "Pre-test collateral should be 0"
-    );
-    try {
-      // burn collateral of account 2 from account 3
-      await FungibleSBTInstance.burnDeposit(accounts[1], amount, {from: accounts[2]});
-      assert.fail("Burning this deposit should fail because the burn allowance is exhausted")
-    }
-    catch (err) {
-      assert.include(
-        err.message,
-        "revert", 
-        "The error message should contain 'revert'"
+      const burnallowanceBefore = Number(
+        await FungibleSBTInstance.getIssuance(acc2.address, acc1.address)
       );
-      assert.include(
-        err.message,
-        "Trying to burn amount larger than assigned collateral deposit.", 
-        "The error message is not as expected"
+      await FungibleSBTInstance.revoke(acc2.address, amount);
+      
+      const burnallowanceAfter = Number(
+        await FungibleSBTInstance.getIssuance(acc2.address, acc1.address)
       );
-    }
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-
-    assert.equal(
-      collateralBefore,
-      collateralAfter,
-      "Collateral should not have changed"
-    );
-  });
-  it("should allow the receiver to return the collateral deposit", async function () {
-    let amount = 10;
-    // issue 10 tokens to account 2 and grant them to account 3
-    await FungibleSBTInstance.issue(accounts[1], amount);
-    await FungibleSBTInstance.grantCollateral(accounts[2], amount, {from: accounts[1]});
-
-    // Get initial balances of second and third account.
-    const [
-      accountOneUnassignedStartingBalance,
-      accountOneStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const [
-      accountTwoUnassignedStartingBalance,
-      accountTwoStartingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[2]);
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    // grant a collateral to account 3 from account 2 to burn tokens
-    await FungibleSBTInstance.returnDeposit(accounts[1], amount, {from: accounts[2]});
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-
-    // Get balances of second and third account after the collateral.
-    const [
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[1]);
-    const [
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance
-    ] = await getBothBalances(FungibleSBTInstance, accounts[2]);
-    assert.equal(
-      collateralBefore - amount,
-      collateralAfter,
-      "Collateral has not been returned correctly"
-    );
-    // assert all balances remain unchanged
-    assertBalancesUnchanged(
-      accountOneUnassignedStartingBalance,
-      accountOneUnassignedEndingBalance,
-      accountOneEndingBalance,
-      accountOneStartingBalance,
-    );
-    assertBalancesUnchanged(
-      accountTwoUnassignedStartingBalance,
-      accountTwoUnassignedEndingBalance,
-      accountTwoEndingBalance,
-      accountTwoStartingBalance,
-    );
-  });
-  it("should not allow to return more tokens than the collateral value", async function () {
-    let amount = 10;
-
-    let collateralBefore = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-    assert.equal(
-      collateralBefore,
-      0,
-      "Pre-test collateral should be 0"
-    );
-    try {
-      // return collateral of account 2 from account 3
-      await FungibleSBTInstance.returnDeposit(accounts[1], amount, {from: accounts[2]});
-      assert.fail("Returning this deposit should fail because amount exceeds allowance.")
-    }
-    catch (err) {
-      assert.include(
-        err.message,
-        "revert", 
-        "The error message should contain 'revert'"
-      );
-      assert.include(
-        err.message,
-        "Trying to return amount larger than assigned collateral deposit.", 
-        "The error message is not as expected"
-      );
-    }
-    let collateralAfter = (await FungibleSBTInstance.collateralDeposit(accounts[1], accounts[2])).toNumber();
-
-    assert.equal(
-      collateralBefore,
-      collateralAfter,
-      "Collateral should not have changed"
-    );
+      // Get balances of first and second account after the transactions.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc1.address);
+      const [,accountTwoEndingBalance] = await getBothBalances(FungibleSBTInstance, acc2.address);
+      
+      // tokens on account two should be gone
+      expect(accountTwoEndingBalance).to.equal(accountTwoStartingBalance - amount);
+      // account one did not earn any new tokens
+      assertBalancesUnchanged(
+        accountOneUnassignedStartingBalance,
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance,
+        accountOneStartingBalance,
+      )
+      // burn allowance should be restored
+      expect(burnallowanceAfter).to.equal(burnallowanceBefore - amount)
+    });
   });
 
+  describe("Deposit Collateral", function() {
+    it("should allow to deposit tokens to another account as a collateral", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+      
+      let amount = 10;
+      // issue 10 tokens to account 2
+      await FungibleSBTInstance.issue(acc2, amount);
+      // Get initial balances of second and third account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2);
+      const [
+        accountTwoUnassignedStartingBalance,
+        accountTwoStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc3);
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      // grant a collateral to account 3 from account two to burn tokens
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+
+      // Get balances of second and third account after the collateral.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2);
+      const [
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc3);
+      // Collateral has not been granted correctly
+			expect(collateralBefore + amount).to.equal(collateralAfter);
+      // assert all balances remain unchanged
+      assertBalancesUnchanged(
+        accountOneUnassignedStartingBalance,
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance,
+        accountOneStartingBalance,
+      );   
+      assertBalancesUnchanged(
+        accountTwoUnassignedStartingBalance,
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance,
+        accountTwoStartingBalance,
+      );
+    });
+    it("should return the value of an account's collateral", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+      let amount = 10;
+      // issue 10 tokens to account 2 and from there give as collateral to acc3
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+
+      let collateralAmount = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      expect(collateralAmount).to.be.equal(amount);
+    });
+    it("should not allow to deposit tokens to another account as a collateral if the collateral exceeds the balance", async function () {
+      const [ FungibleSBTInstance, acc1, acc2, acc3 ] = await loadFixture(deployTokenFixture);
+
+      let amount = 10;
+      // issue 10 tokens to account 2 and from there give as collateral to acc3
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc1, acc2));
+      // grant a collateral to account 3 from account two to burn tokens
+      await expect(FungibleSBTInstance.grantCollateral(acc3, amount))
+				.to.be.revertedWith("Fungible SBT: Can not grant collateral. Resulting deposits exceed total balance.")
+      
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc1, acc2));
+      // Collateral value should not have changed
+			expect(collateralBefore).to.equal(collateralAfter);
+      
+      
+    });
+    it("should not allow to deposit tokens as collateral if the already granted collaterals exceed balance", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+
+      let amount = 10;
+      // issue 10 tokens to account 2 and from there give as collateral to acc3
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+      // make sure balance is high enough
+      // acc 1 - 10 tokens, 10 collateral to acc 2
+      //Pre-test balance insufficient?
+      expect(await FungibleSBTInstance.balanceOf(acc2)).to.equal(amount);
+      
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      //Pre-test collateral insufficient?
+      expect(collateralBefore).to.equal(amount);
+      // grant a collateral to account 3 from account two to burn tokens
+      await expect(FungibleSBTInstance.grantCollateral(acc3, amount))
+				.to.be.revertedWith("Fungible SBT: Can not grant collateral. Resulting deposits exceed total balance.");
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      // Collateral should not have been changed
+			expect(collateralBefore).to.equal(collateralAfter);
+    });
+    it("should allow to burn tokens deposited as a collateral", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+
+      let amount = 10;
+      // issue 10 tokens to account 2 and from there give as collateral to acc3
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+      // Get initial balances of second and third account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2);
+      const [
+        accountTwoUnassignedStartingBalance,
+        accountTwoStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc3);
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      // grant a collateral to account 3 from account 2 to burn tokens
+      await FungibleSBTInstance.connect(acc3).burnDeposit(acc2, amount);
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+
+      // Get balances of second and third account after the collateral.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2);
+      const [
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc3);
+      // Collateral has not been burned correctly
+			expect(collateralBefore - amount).to.equal(collateralAfter);
+      // assert all balances remain unchanged
+      // Collateral has not been deducted from balance
+			expect(accountOneEndingBalance).to.equal(accountOneStartingBalance - amount);
+      // Unassigned balance should not have changed!
+			expect(accountOneUnassignedStartingBalance).to.equal(accountOneUnassignedEndingBalance);
+      assertBalancesUnchanged(
+        accountTwoUnassignedStartingBalance,
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance,
+        accountTwoStartingBalance,
+      );
+    });
+    it("should not allow to burn more tokens than the collateral value", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+
+      let amount = 10;
+      // issue 10 tokens to account 2 and from there give as collateral to acc3
+      // and burn the deposit
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+      await FungibleSBTInstance.connect(acc3).burnDeposit(acc2, amount);
+
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      // Pre-test collateral should be 0
+			expect(collateralBefore).to.equal(0);
+      // Burning this deposit should fail because the burn allowance is exhausted
+      await expect(FungibleSBTInstance.connect(acc3).burnDeposit(acc2, amount))
+        .to.be.revertedWith("Fungible SBT: Trying to burn amount larger than assigned collateral deposit.");
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+
+      // Collateral should not have changed
+			expect(collateralBefore).to.equal(collateralAfter);
+    });
+    it("should allow the receiver to return the collateral deposit", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+
+      let amount = 10;
+      // issue 10 tokens to account 2 and grant them to account 3
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+
+      // Get initial balances of second and third account.
+      const [
+        accountOneUnassignedStartingBalance,
+        accountOneStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2);
+      const [
+        accountTwoUnassignedStartingBalance,
+        accountTwoStartingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc3);
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      // grant a collateral to account 3 from account 2 to burn tokens
+      await FungibleSBTInstance.connect(acc3).returnDeposit(acc2, amount);
+
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+
+      // Get balances of second and third account after the collateral.
+      const [
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc2);
+      const [
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance
+      ] = await getBothBalances(FungibleSBTInstance, acc3);
+      // Collateral has not been returned correctly
+			expect(collateralBefore - amount).to.equal(collateralAfter);
+      // assert all balances remain unchanged
+      assertBalancesUnchanged(
+        accountOneUnassignedStartingBalance,
+        accountOneUnassignedEndingBalance,
+        accountOneEndingBalance,
+        accountOneStartingBalance,
+      );
+      assertBalancesUnchanged(
+        accountTwoUnassignedStartingBalance,
+        accountTwoUnassignedEndingBalance,
+        accountTwoEndingBalance,
+        accountTwoStartingBalance,
+      );
+    });
+    it("should not allow to return more tokens than the collateral value", async function () {
+      const [ FungibleSBTInstance, , acc2, acc3 ] = await loadFixture(deployTokenFixture);
+      let amount = 10;
+      // issue 10 tokens to account 2 and grant them to account 3
+      await FungibleSBTInstance.issue(acc2, amount);
+      await FungibleSBTInstance.connect(acc2).grantCollateral(acc3, amount);
+      await FungibleSBTInstance.connect(acc3).returnDeposit(acc2, amount);
+
+      let collateralBefore = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+      // Pre-test collateral should be 0
+			expect(collateralBefore).to.equal(0);
+      // Returning this deposit should fail because amount exceeds allowance.
+      await expect(FungibleSBTInstance.connect(acc3).returnDeposit(acc2, amount))
+        .to.be.revertedWith("Fungible SBT: Trying to return amount larger than assigned collateral deposit.");
+
+      let collateralAfter = Number(await FungibleSBTInstance.collateralDeposit(acc2, acc3));
+
+      // Collateral should not have changed
+			expect(collateralBefore).to.equal(collateralAfter);
+    });
+  });
 });
 
 let getBothBalances = async (token, account) => {
   let unassigned = (
     await token.unassignedBalanceOf(account)
-  ).toNumber();
+  )
+;
   let regular = (
     await token.balanceOf(account)
-  ).toNumber();
-  return [unassigned, regular];
+  );
+  return [Number(unassigned), Number(regular)];
 }
 
 let assertBalancesUnchanged = (
@@ -474,14 +480,6 @@ let assertBalancesUnchanged = (
   RegularStartingBalance,
   RegularEndingBalance,
 ) => {
-  assert.equal(
-    UnassignedStartingBalance,
-    UnassignedEndingBalance,
-    "Unassigned tokens balance should not have been affected."
-  );
-  assert.equal(
-    RegularStartingBalance,
-    RegularEndingBalance,
-    "Tokens balance should not have been affected."
-  );
+  expect(UnassignedStartingBalance).to.equal(UnassignedEndingBalance)
+  expect(RegularStartingBalance).to.equal(RegularEndingBalance)
 }

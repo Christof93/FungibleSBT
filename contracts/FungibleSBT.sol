@@ -1,6 +1,6 @@
 // contracts/FungibleSBT.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./interfaces/IFungibleSBT.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -126,7 +126,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
     ) external returns (bool) {
         address revoker = msg.sender;       
         uint256 allowance = _issued[account][revoker];        
-        require(allowance >= amount, "Fungible SBT: Not enough revocation allowance");
+        require(allowance >= amount, "Fungible SBT: Not enough revocation allowance.");
         _burn(account, amount);
         // already checked amount <= allowance
         unchecked {
@@ -177,8 +177,6 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
      * - `account` cannot be the zero address.
      */
     function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "FungibleSBT: mint to the zero address");
-
         _beforeTokenTransfer(address(0), account, amount);
 
         _totalSupply += amount;
@@ -203,8 +201,6 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "FungibleSBT: burn from the zero address");
-
         _beforeTokenTransfer(account, address(0), amount);
 
         uint256 accountBalance = _balances[account];
