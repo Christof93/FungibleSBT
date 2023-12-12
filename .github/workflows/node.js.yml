@@ -20,5 +20,6 @@ jobs:
         node-version: 18.x
         cache: 'npm'
     - run: npm ci
-    - run: npx ganache > ganache-output.log &
-    - run: truffle test
+    - run: npx hardhat compile
+    - run: npx hardhat test
+    - run: npx hardhat coverage
