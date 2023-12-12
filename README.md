@@ -40,7 +40,7 @@ Since the standard template of fungible tokens is the ERC20 contract I  adapt it
 
 Compile
 ---
-Install truffle and openzeppelin contracts
+Install hardhat and openzeppelin contracts
 ```
 npm install --production
 ```
