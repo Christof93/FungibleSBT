@@ -2,13 +2,13 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
     "bigint-buffer": "^1.1.5"
+    "hardhat": "^2.19.2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "chai": "^4.3.10",
     "ethers": "^6.9.0",
-    "hardhat": "^2.19.2",
     "solidity-coverage": "^0.8.5"
   },
   "scripts": {
