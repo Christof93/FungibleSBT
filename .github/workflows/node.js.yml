@@ -23,3 +23,15 @@ jobs:
     - run: npx hardhat compile
     - run: npx hardhat test
     - run: npx hardhat coverage
+    
+    - name: Coverage report
+      uses: eleboys/test-coverage-report-action@v1.0.2
+      id: report
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: coverage.json
+        title: FungibleSBT Test Coverage
+
+    - name: Print the output summary
+      run: echo "Report coverage json ${{ steps.report.outputs.summary }}"
+            
