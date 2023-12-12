@@ -53,24 +53,28 @@ npm run compile
 Test
 ---
 
-Install truffle, openzeppelin and ganache
+Install hardhat and openzeppelin
+
 ```
 npm install
 ```
 
-To run Ganache from the console use
+compile using the command:
 
 ```
-ganache
-```
-
-This should create an RPC server on 127.0.0.1:8545 and allow you to run the test suite
-
+npm run compile
+``` 
 
 Then, to run the test suite use this command:
 
 ```
 npm run test
+```
+
+And run coverage using
+
+```
+npm run coverage
 ```
  
 License
