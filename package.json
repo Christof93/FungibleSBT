@@ -15,5 +15,28 @@
     "coverage": "hardhat run coverage",
     "compile": "hardhat compile",
     "test": "hardhat test"
-  }
+  },
+  "name": "fungible-sbt",
+  "version": "0.0.1",
+  "description": "A fungible Soulbound Token for the Ethereum blockchain",
+  "main": "hardhat.config.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Christof93/FungibleSBT.git"
+  },
+  "keywords": [
+    "Token",
+    "Soulbound",
+    "Ethereum",
+    "Solidity"
+  ],
+  "author": "Christof Bless",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Christof93/FungibleSBT/issues"
+  },
+  "homepage": "https://github.com/Christof93/FungibleSBT#readme"
 }
