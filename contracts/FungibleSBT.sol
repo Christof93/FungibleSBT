@@ -111,7 +111,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
         unchecked {
             _issued[to][from] += amount;
         }
-        emit Issued(from, to, amount);
+        emit Issue(from, to, amount);
         return true;
     }
 
@@ -132,7 +132,7 @@ contract FungibleSBT is  ERC165, IFungibleSBT {
         unchecked {
             _issued[account][revoker] -= amount;
         }
-        emit Revoked(account, amount);
+        emit Revoke(account, amount);
         return true;
     }
 

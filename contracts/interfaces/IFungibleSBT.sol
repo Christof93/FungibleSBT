@@ -7,7 +7,7 @@ interface IFungibleSBT {
      * @dev Emitted when tokens are issued from one account (`from`) to
      * another (`to`).
      */
-    event Issued(address indexed from, address indexed to, uint256 value);
+    event Issue(address indexed from, address indexed to, uint256 value);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -18,7 +18,7 @@ interface IFungibleSBT {
     /**
      * @dev MUST emit when `value` tokens are revoked from account `from`.
      */
-    event Revoked(address indexed from, uint256 value);
+    event Revoke(address indexed from, uint256 value);
 
     /**
      * @dev Returns the name of the token.

@@ -5,6 +5,22 @@ pragma solidity ^0.8.20;
 import "./IFungibleSBT.sol";
 
 interface IFungibleSBTDepositable {
+        /**
+     * @dev Emitted when tokens are issued from one account (`from`) to
+     * another (`to`).
+     */
+    event Deposit(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`). Usually only happens through the minting.
+     */
+    event Burn(address indexed from, address indexed to, uint256 value);
+    
+    /**
+     * @dev MUST emit when `value` tokens are revoked from account `from`.
+     */
+    event Return(address indexed from, address indexed to, uint256 value);
     /**
      * @dev Sets `amount` as allowance of `revoker` to burn caller's tokens.
      *

@@ -12,8 +12,8 @@ import "./interfaces/IFungibleSBTDepositable.sol";
  * token to certain addresses.
  */
 contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
-    mapping(address => mapping(address => uint256)) private _burnAllowances;
-    mapping(address => uint256) private _totalCollaterals;
+    mapping(address => mapping(address => uint256)) internal _burnAllowances;
+    mapping(address => uint256) internal _totalCollaterals;
 
     constructor(string memory name_, string memory symbol_) FungibleSBT(
         name_,
@@ -47,7 +47,7 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
         if (account != revoker) {
             _spendBurnAllowance(account, revoker, amount);
         }
-        emit Revoked(account, amount);
+        emit Burn(revoker, account, amount);
         return true;
     }
 
@@ -67,7 +67,7 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
         if (account != revoker) {
             _spendBurnAllowance(account, revoker, amount);
         }
-        emit Revoked(account, amount);
+        emit Return(revoker, account, amount);
         return true;
     }
 
@@ -94,6 +94,7 @@ contract FungibleSBTDepositable is  FungibleSBT, IFungibleSBTDepositable {
         require(alreadyLent + amount <= accountBalance,
             "Fungible SBT: Can not grant collateral. Resulting deposits exceed total balance.");
         _setBurnAllowance(from, revoker, amount);
+        emit Deposit(from, revoker, amount);
         return true;
     }
 
